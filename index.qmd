@@ -1,0 +1,866 @@
+---
+title: "Panorama Electoral 2025"
+format:
+  dashboard:
+    orientation: rows
+    theme: flatly
+---
+```{r}
+#| include: false
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(plotly)
+library(shinydashboard)
+library(htmltools)
+
+
+# Leer la base
+encuestas <- "C:\\Users\\rcalcina\\Downloads\\r largo\\dashboard\\encuestas.xlsx"
+caso1 <- read_excel(encuestas)
+
+# Limpieza
+caso1 <- caso1 |>
+  mutate(
+    fecha = as.Date(fecha),
+    porcentaje = as.numeric(porcentaje)
+  )
+caso1 <- caso1 |>
+  mutate(
+    fecha = as.Date(fecha),
+    porcentaje = as.numeric(porcentaje) / 100  # ← aquí la corrección
+  )
+
+# Filtrar solo la región Nacional
+caso_nacional <- caso1 %>%
+  filter(region == "Nacional") %>%
+  arrange(candidato, fecha)
+
+# Candidatos principales
+candidatos_objetivo <- c("Samuel Doria Medina", "Jorge Tuto Quiroga", "Andrónico Rodríguez")
+
+# Promedio de porcentaje y crecimiento para los tres candidatos
+resultados_candidatos <- caso_nacional %>%
+  filter(candidato %in% candidatos_objetivo) %>%
+  group_by(candidato) %>%
+  mutate(tasa_crecimiento = (porcentaje - lag(porcentaje)) / lag(porcentaje)) %>%
+  summarise(
+    promedio_porcentaje = mean(porcentaje, na.rm = TRUE),
+    promedio_tasa = mean(tasa_crecimiento, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Categorías de voto residual
+categorias_residuales <- c("Nulo", "Blanco", "Indecisos")
+
+# Promedio de porcentaje y tasa de crecimiento agrupado
+voto_residual <- caso_nacional %>%
+  filter(candidato %in% categorias_residuales) %>%
+  group_by(candidato) %>%
+  mutate(tasa_crecimiento = (porcentaje - lag(porcentaje)) / lag(porcentaje)) %>%
+  summarise(
+    promedio_porcentaje = mean(porcentaje, na.rm = TRUE),
+    promedio_tasa = mean(tasa_crecimiento, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  summarise(
+    promedio_porcentaje = mean(promedio_porcentaje, na.rm = TRUE),
+    promedio_tasa = mean(promedio_tasa, na.rm = TRUE)
+  )
+
+
+```
+
+# Encuestas
+
+## Row {height="20%"}
+
+```{r}
+library(htmltools)
+library(shiny)
+library(shinydashboard)
+valueBox(
+  value = HTML(
+    paste0(
+      "<div style='display: flex; align-items: center;'>",
+      
+        "<div style='display: flex; flex-direction: column; justify-content: flex-start;'>",
+          "<div style='font-size: 18px; font-weight: bold;'>Samuel Doria Medina</div>",
+          "<div style='font-size: 12px; margin-top: 1px;'>Tasa de crecimiento: ",
+          scales::percent(resultados_candidatos$promedio_tasa[resultados_candidatos$candidato == 'Samuel Doria Medina'], accuracy = 0.1),
+          "</div>",
+        "</div>",
+        
+        "<div style='width: 20px;'></div>",
+        
+        # Tooltip aquí
+        "<div title='Promedio de todas las encuestas' style='font-size: 24px; font-weight: bold; color: #333; text-align: left;'>",
+          scales::percent(resultados_candidatos$promedio_porcentaje[resultados_candidatos$candidato == 'Samuel Doria Medina'], accuracy = 0.1),
+        "</div>",
+      
+      "</div>"
+    )
+  ),
+  subtitle = NULL
+)
+
+
+```
+
+###
+
+```{r}
+valueBox(
+  value = HTML(
+    paste0(
+      "<div style='display: flex; align-items: center;'>",
+      
+        # Columna izquierda: nombre y tasa
+        "<div style='display: flex; flex-direction: column; justify-content: flex-start;'>",
+          "<div style='font-size: 18px; font-weight: bold;'>Jorge Tuto Quiroga</div>",
+          "<div style='font-size: 12px; margin-top: 1px;'>Tasa de crecimiento: ",
+          scales::percent(resultados_candidatos$promedio_tasa[resultados_candidatos$candidato == 'Jorge Tuto Quiroga'], accuracy = 0.1),
+          "</div>",
+        "</div>",
+        
+        # Separador
+        "<div style='width: 20px;'></div>",
+        
+        # Promedio grande con tooltip
+        "<div title='Promedio de todas las encuestas' style='font-size: 24px; font-weight: bold; color: #333; text-align: left;'>",
+          scales::percent(resultados_candidatos$promedio_porcentaje[resultados_candidatos$candidato == 'Jorge Tuto Quiroga'], accuracy = 0.1),
+        "</div>",
+      
+      "</div>"
+    )
+  ),
+  subtitle = NULL
+)
+
+```
+
+### 
+
+```{r}
+valueBox(
+  value = HTML(
+    paste0(
+      "<div style='display: flex; align-items: center;'>",
+      
+        # Columna izquierda: nombre y tasa
+        "<div style='display: flex; flex-direction: column; justify-content: flex-start;'>",
+          "<div style='font-size: 18px; font-weight: bold;'>Andrónico Rodríguez</div>",
+          "<div style='font-size: 12px; margin-top: 1px;'>Tasa de crecimiento: ",
+          scales::percent(resultados_candidatos$promedio_tasa[resultados_candidatos$candidato == 'Andrónico Rodríguez'], accuracy = 0.1),
+          "</div>",
+        "</div>",
+        
+        # Separador
+        "<div style='width: 20px;'></div>",
+        
+        # Promedio grande con tooltip
+        "<div title='Promedio de todas las encuestas' style='font-size: 24px; font-weight: bold; color: #333; text-align: left;'>",
+          scales::percent(resultados_candidatos$promedio_porcentaje[resultados_candidatos$candidato == 'Andrónico Rodríguez'], accuracy = 0.1),
+        "</div>",
+      
+      "</div>"
+    )
+  ),
+  subtitle = NULL
+)
+
+```
+
+###
+
+```{r}
+valueBox(
+  value = HTML(
+    paste0(
+      "<div style='display: flex; align-items: center;'>",
+      
+        # Columna izquierda: nombre y tasa
+        "<div style='display: flex; flex-direction: column; justify-content: flex-start;'>",
+          "<div title='Voto Residual: Blanco, Nulo, Indecisos' style='font-size: 18px; font-weight: bold;'>Voto Residual</div>",
+          "<div style='font-size: 12px; margin-top: 1px;'>Tasa de crecimiento: ",
+          scales::percent(voto_residual$promedio_tasa, accuracy = 0.1),
+          "</div>",
+        "</div>",
+        
+        # Separador
+        "<div style='width: 20px;'></div>",
+        
+        # Promedio grande con tooltip
+        "<div title='Promedio de todas las encuestas' style='font-size: 24px; font-weight: bold; color: #333; text-align: left;'>",
+          scales::percent(voto_residual$promedio_porcentaje, accuracy = 0.1),
+        "</div>",
+      
+      "</div>"
+    )
+  ),
+  subtitle = NULL
+)
+
+
+```
+
+
+## Row {height="80%"}
+
+###  {width="50%"}
+
+```{r}
+library(plotly)
+library(dplyr)
+library(tidyr)
+
+# Ordenar fuentes por fecha más reciente
+fuentes_ordenadas <- caso1 %>%
+  group_by(fuente) %>%
+  summarise(ultima_fecha = max(fecha, na.rm = TRUE), .groups = "drop") %>%
+  arrange(desc(ultima_fecha)) %>%
+  pull(fuente)
+
+matrices <- list()
+textos_list <- list()
+
+for (f in fuentes_ordenadas) {
+  datos_f <- caso1 %>%
+    filter(fuente == f) %>%
+    select(region, candidato, porcentaje) %>%
+    pivot_wider(names_from = candidato, values_from = porcentaje) %>%
+    arrange(region)
+  
+  regiones <- datos_f$region
+  matriz <- as.matrix(datos_f[, -1]) * 100
+  rownames(matriz) <- regiones
+  
+  orden_col <- order(colSums(matriz, na.rm = TRUE), decreasing = TRUE)
+  matriz <- matriz[, orden_col, drop = FALSE]
+  
+  orden_filas <- order(rowSums(matriz, na.rm = TRUE), decreasing = TRUE)
+  matriz <- matriz[orden_filas, , drop = FALSE]
+  
+  textos <- matrix(nrow = nrow(matriz), ncol = ncol(matriz))
+  for (i in 1:nrow(matriz)) {
+    for (j in 1:ncol(matriz)) {
+      textos[i, j] <- paste0(
+        "Departamento: ", rownames(matriz)[i], "<br>",
+        "Candidato: ", colnames(matriz)[j], "<br>",
+        "Porcentaje: ", round(matriz[i, j], 1), "%"
+      )
+    }
+  }
+  
+  matriz_t <- t(matriz)[ncol(matriz):1, ]
+  textos_t <- t(textos)[ncol(textos):1, ]
+  
+  matrices[[f]] <- matriz_t
+  textos_list[[f]] <- textos_t
+}
+
+fig <- plot_ly()
+
+for (i in seq_along(fuentes_ordenadas)) {
+  f <- fuentes_ordenadas[i]
+  fig <- add_trace(
+    fig,
+    x = colnames(matrices[[f]]),
+    y = rownames(matrices[[f]]),
+    z = matrices[[f]],
+    type = "heatmap",
+    colorscale = list(
+      c(0.0, "#fee6ce"),
+      c(0.3, "#fdd0a2"),
+      c(0.6, "#fdae6b"),
+      c(0.85, "#fd8d3c"),
+      c(1.0, "#e6550d")
+    ),
+    text = textos_list[[f]],
+    hoverinfo = "text",
+    visible = (i == 1),
+    colorbar = list(
+      len = 1,            # Longitud de la barra (1 = 100% del alto del gráfico)
+      thickness = 20,     # Grosor en píxeles
+      title = list(text = "", side = "right")
+    )
+  )
+}
+
+botones <- lapply(seq_along(fuentes_ordenadas), function(i) {
+  vis <- rep(FALSE, length(fuentes_ordenadas))
+  vis[i] <- TRUE
+  list(
+    method = "restyle",
+    args = list("visible", vis),
+    label = fuentes_ordenadas[i]
+  )
+})
+
+fig <- fig %>%
+  layout(
+    updatemenus = list(
+      list(
+        active = 0,
+        buttons = botones,
+        direction = "down",
+        x = 0,
+        xanchor = "left",
+        y = 1.15,
+        yanchor = "top"
+      )
+    ),
+    xaxis = list(showticklabels = TRUE, title = FALSE, showgrid = FALSE, zeroline = FALSE),
+    yaxis = list(showticklabels = TRUE, title = FALSE, showgrid = FALSE, zeroline = FALSE),
+    margin = list(l = 20, r = 20, t = 40, b = 20)
+  )
+
+fig
+
+```
+
+### Nacional {.tabset width=50%} 
+
+#### Nacional 
+```{r}
+library(plotly)
+library(dplyr)
+library(scales)
+
+datos_nacional <- caso1 %>% filter(region == "Nacional")
+
+fuentes_ordenadas <- datos_nacional %>%
+  group_by(fuente) %>%
+  summarise(ultima_fecha = max(fecha, na.rm = TRUE), .groups = "drop") %>%
+  arrange(desc(ultima_fecha)) %>%
+  pull(fuente)
+
+orden_candidatos_por_fuente <- list()
+trazas <- list()
+
+for (f in fuentes_ordenadas) {
+  datos_f <- datos_nacional %>%
+    filter(fuente == f) %>%
+    group_by(candidato) %>%
+    summarise(porcentaje = mean(porcentaje, na.rm = TRUE), .groups = "drop") %>%
+    arrange(desc(porcentaje))
+  
+  orden_candidatos_por_fuente[[f]] <- datos_f$candidato
+  
+  trazas[[length(trazas) + 1]] <- list(
+    x = datos_f$porcentaje,
+    y = datos_f$candidato,
+    type = "bar",
+    name = f,
+    orientation = "h",
+    visible = FALSE,
+    marker = list(color = "#fd8d3c"),
+    text = paste0( percent(datos_f$porcentaje, accuracy = 0.1)),
+    hoverinfo = "text",
+    textposition = "none"  # 🔒 Esto oculta texto sobre las barras
+  )
+}
+
+trazas[[1]]$visible <- TRUE
+
+fig <- plot_ly()
+
+for (traza in trazas) {
+  fig <- add_trace(
+    fig,
+    x = traza$x,
+    y = traza$y,
+    type = traza$type,
+    name = traza$name,
+    orientation = traza$orientation,
+    visible = traza$visible,
+    marker = traza$marker,
+    text = traza$text,
+    hoverinfo = traza$hoverinfo,
+    textposition = traza$textposition  # ✅ Aquí se aplica para ocultar texto en barras
+  )
+}
+
+botones <- lapply(seq_along(fuentes_ordenadas), function(i) {
+  fuente <- fuentes_ordenadas[i]
+  orden_candidatos <- orden_candidatos_por_fuente[[fuente]]
+  
+  list(
+    method = "update",
+    args = list(
+      list(visible = sapply(seq_along(fuentes_ordenadas), function(j) j == i)),
+      list(
+        yaxis = list(
+          categoryorder = "array",
+          categoryarray = rev(orden_candidatos)  # De mayor a menor
+        )
+      )
+    ),
+    label = fuente
+  )
+})
+
+fig <- fig %>%
+  layout(
+    updatemenus = list(
+      list(
+        buttons = botones,
+        direction = "down",
+        showactive = TRUE,
+        x = 0,
+        xanchor = "left",
+        y = 1.1,
+        yanchor = "top"
+      )
+    ),
+    xaxis = list(
+      title = "",
+      tickformat = ".0%",
+      showgrid = FALSE
+    ),
+    yaxis = list(
+      title = "",
+      categoryorder = "array",
+      categoryarray = rev(orden_candidatos_por_fuente[[fuentes_ordenadas[1]]]),
+      showgrid = FALSE
+    ),
+    margin = list(l = 150, r = 20, t = 20, b = 40),
+    title = list(text = "")
+  )
+
+fig
+
+```
+
+#### Departamentos
+```{r}
+library(plotly)
+library(dplyr)
+library(tidyr)
+
+# Aseguramos que la fecha esté en formato Date y excluimos ciertos candidatos
+excluir_candidatos <- c("Luis Arce", "Chi Hyun Chung", "Ninguno mencionado", "Otro candidato", "Paulo Rodríguez")
+
+caso1 <- caso1 %>%
+  mutate(fecha = as.Date(fecha)) %>%
+  filter(!candidato %in% excluir_candidatos)  # ← Aquí excluimos
+
+# Lista de candidatos únicos restantes
+candidatos <- unique(caso1$candidato)
+
+# Lista de todas las regiones posibles
+todas_las_regiones <- unique(caso1$region)
+
+# Función para crear trazas por región para un candidato dado
+crear_trazas <- function(candidato_seleccionado) {
+  datos_filtrados <- caso1 %>%
+    filter(candidato == candidato_seleccionado) %>%
+    group_by(fecha, region, fuente) %>%                  # Agregamos fuente al group_by
+    summarise(promedio = mean(porcentaje, na.rm = TRUE), .groups = "drop")
+
+  fechas_unicas <- unique(caso1$fecha)
+  combinaciones_completas <- expand_grid(fecha = fechas_unicas, region = todas_las_regiones)
+
+  datos_completos <- combinaciones_completas %>%
+    left_join(datos_filtrados, by = c("fecha", "region")) %>% 
+    arrange(fecha)
+
+  trazas <- lapply(todas_las_regiones, function(reg) {
+    datos_reg <- datos_completos %>% filter(region == reg)
+
+    if (all(is.na(datos_reg$promedio))) return(NULL)
+
+    list(
+      x = datos_reg$fecha,
+      y = datos_reg$promedio,
+      type = 'scatter',
+      mode = 'lines+markers',
+      name = reg,
+      visible = TRUE,
+      text = paste0(
+        "Fecha: ", format(datos_reg$fecha, "%Y-%m-%d"), "<br>",
+        "Porcentaje: ", scales::percent(datos_reg$promedio, accuracy = 0.1)
+    ),
+
+      hoverinfo = "text"
+    )
+  })
+
+  trazas <- Filter(Negate(is.null), trazas)
+  return(trazas)
+}
+
+
+# Crear figura con primer candidato
+primer_candidato <- candidatos[1]
+trazas_iniciales <- crear_trazas(primer_candidato)
+
+fig <- plot_ly()
+
+for (traza in trazas_iniciales) {
+  fig <- add_trace(fig, x = traza$x, y = traza$y, type = traza$type,
+                   mode = traza$mode, name = traza$name, visible = TRUE)
+}
+
+# Guardar todas las trazas
+trazas_por_candidato <- lapply(candidatos, crear_trazas)
+
+# Homogeneizar trazas
+max_trazas <- max(sapply(trazas_por_candidato, length))
+
+for (i in seq_along(trazas_por_candidato)) {
+  n <- length(trazas_por_candidato[[i]])
+  if (n < max_trazas) {
+    for (j in (n+1):max_trazas) {
+      trazas_por_candidato[[i]][[j]] <- list(
+        x = NA, y = NA, type = 'scatter', mode = 'lines', name = '', visible = FALSE
+      )
+    }
+  }
+}
+
+# Agregar trazas de otros candidatos
+for (i in 2:length(candidatos)) {
+  for (traza in trazas_por_candidato[[i]]) {
+    fig <- add_trace(fig, x = traza$x, y = traza$y, type = traza$type,
+                     mode = traza$mode, name = traza$name, visible = FALSE)
+  }
+}
+
+# Crear visibilidad por candidato
+visibilidad_botones <- lapply(1:length(candidatos), function(i) {
+  vis <- rep(FALSE, max_trazas * length(candidatos))
+  start <- (i - 1) * max_trazas + 1
+  end <- i * max_trazas
+  vis[start:end] <- TRUE
+  vis
+})
+
+# Botones
+botones <- lapply(seq_along(candidatos), function(i) {
+  list(
+    method = "update",
+    args = list(list(visible = visibilidad_botones[[i]])),
+    label = candidatos[i]
+  )
+})
+
+# Layout final
+fig <- fig %>%
+  layout(
+    updatemenus = list(
+      list(
+        buttons = botones,
+        direction = "down",
+        showactive = TRUE,
+        x = 0,
+        xanchor = "left",
+        y = 1.1,
+        yanchor = "top"
+      )
+    ),
+    xaxis = list(
+      title = "Para visualizar solo un departamento, presiona sobre su nombre",
+      type = "date",
+      tickformat = "%Y-%m-%d",
+      showgrid = FALSE
+    ),
+    yaxis = list(
+      title = "",
+      tickformat = ".0%"
+    ),
+    legend = list(           # <- esta línea es la clave
+      itemclick = "toggleothers"
+    ),
+    title = NULL
+  )
+
+fig
+
+
+
+```
+#### Crecimiento
+```{r}
+## TAB 3 - Tasa de crecimiento por región {tab}
+library(plotly)
+library(dplyr)
+
+# Preparar datos: tasa de crecimiento por candidato, región y fecha
+datos_tasa <- caso1 %>%
+  arrange(candidato, region, fecha) %>%
+  group_by(candidato, region) %>%
+  mutate(tasa_crecimiento = (porcentaje - lag(porcentaje)) / lag(porcentaje)) %>%
+  ungroup()
+
+# Lista de candidatos únicos para el botón desplegable
+candidatos <- unique(datos_tasa$candidato)
+
+# Crear trazas por región para el primer candidato
+crear_trazas_tasa <- function(candidato_sel) {
+  datos_filtrados <- datos_tasa %>%
+    filter(candidato == candidato_sel)
+
+  regiones <- unique(datos_filtrados$region)
+
+  trazas <- lapply(regiones, function(reg) {
+    datos_reg <- datos_filtrados %>% filter(region == reg)
+
+    hover_text <- paste0(
+      "Región: ", datos_reg$region, "<br>",
+      "Fuente: ", datos_reg$fuente, "<br>",
+      "Fecha: ", format(datos_reg$fecha, "%Y-%m-%d"), "<br>",
+      "Tasa Crecimiento: ", scales::percent(datos_reg$tasa_crecimiento, accuracy = 0.1)
+    )
+
+    # Esta parte es el cambio clave: hover_text debe ser un vector
+    # Ya que paste0 hace vectorizado por default, esta parte está correcta.
+
+    list(
+      x = datos_reg$fecha,
+      y = datos_reg$tasa_crecimiento,
+      type = 'scatter',
+      mode = 'lines+markers',
+      name = reg,
+      hoverinfo = "text",
+      text = hover_text,
+      hovertemplate = "%{text}<extra></extra>",
+      visible = TRUE
+    )
+  })
+
+  return(trazas)
+}
+
+
+
+# Trazas iniciales para el primer candidato
+trazas_iniciales <- crear_trazas_tasa(candidatos[1])
+
+fig <- plot_ly()
+
+for (traza in trazas_iniciales) {
+  fig <- add_trace(fig, x = traza$x, y = traza$y, type = traza$type,
+                   mode = traza$mode, name = traza$name, visible = traza$visible)
+}
+
+# Todas las trazas para todos los candidatos
+trazas_por_candidato <- lapply(candidatos, crear_trazas_tasa)
+
+max_trazas <- max(sapply(trazas_por_candidato, length))
+
+# Rellenar con trazas invisibles para igualar longitud
+for (i in seq_along(trazas_por_candidato)) {
+  n <- length(trazas_por_candidato[[i]])
+  if (n < max_trazas) {
+    for (j in (n+1):max_trazas) {
+      trazas_por_candidato[[i]][[j]] <- list(
+        x = NA, y = NA, type = 'scatter', mode = 'lines', name = '', visible = FALSE
+      )
+    }
+  }
+}
+
+# Añadir trazas de todos candidatos excepto el primero que ya está
+for (i in 2:length(candidatos)) {
+  for (traza in trazas_por_candidato[[i]]) {
+    fig <- add_trace(fig, x = traza$x, y = traza$y, type = traza$type,
+                     mode = traza$mode, name = traza$name, visible = FALSE)
+  }
+}
+
+# Crear botones para cada candidato
+visibilidad_botones <- lapply(1:length(candidatos), function(i) {
+  vis <- rep(FALSE, max_trazas * length(candidatos))
+  start <- (i - 1) * max_trazas + 1
+  end <- i * max_trazas
+  vis[start:end] <- TRUE
+  vis
+})
+
+botones <- lapply(seq_along(candidatos), function(i) {
+  list(
+    method = "update",
+    args = list(list(visible = visibilidad_botones[[i]])),
+    label = candidatos[i]
+  )
+})
+
+fig <- fig %>%
+  layout(
+    updatemenus = list(
+      list(
+        buttons = botones,
+        direction = "down",
+        showactive = TRUE,
+        x = 0,
+        xanchor = "left",
+        y = 1.1,
+        yanchor = "top"
+      )
+    ),
+    xaxis = list(title = "Para visualizar solo un departamento, presiona sobre su nombre", type = "date",
+      tickformat = "%Y-%m-%d",  nticks = 4     # <- formato deseado para fechas en eje X
+    ),
+    yaxis = list(title = "", tickformat = ".0%"),
+    legend = list(           # <- esta línea es la clave
+      itemclick = "toggleothers"
+    ),
+    title = NULL
+  )
+
+fig
+
+```
+#### Comparación
+```{r}
+library(plotly)
+library(dplyr)
+
+# Filtrar solo datos de la región Nacional
+datos_nacional <- caso1 %>%
+  filter(region == "Nacional") %>%
+  arrange(fecha)
+
+candidatos <- unique(datos_nacional$candidato)
+
+# Crear el gráfico
+fig <- plot_ly()
+
+# Agregar todas las trazas con visibilidad inicial en "legendonly"
+for (i in seq_along(candidatos)) {
+  datos_filtrados <- datos_nacional %>%
+    filter(candidato == candidatos[i])
+  
+  fig <- add_trace(
+    fig,
+    x = datos_filtrados$fecha,
+    y = datos_filtrados$porcentaje,
+    type = 'scatter',
+    mode = 'lines+markers',
+    name = candidatos[i],
+    visible = "legendonly",  # Ocultos al inicio
+    text = paste0("Fuente: ", datos_filtrados$fuente),
+    hovertemplate = paste(
+      "Fecha: %{x|%d-%m-%Y}<br>",
+      "Porcentaje: %{y:.1%}<br>",
+      "%{text}",
+      "<extra></extra>"
+    )
+  )
+}
+
+# Layout sin dropdown y con leyenda libre
+# Obtener rango de fechas del dataset
+rango_fechas <- range(datos_nacional$fecha, na.rm = TRUE)
+rango_fechas[1] <- rango_fechas[1] - 1  # restar un día para el inicio
+rango_fechas[2] <- rango_fechas[2] + 1  # sumar un día para el fin
+
+rango_fechas <- as.character(rango_fechas)
+
+fig <- fig %>%
+  layout(
+    xaxis = list(
+      title = "Selecciona el nombre de los candidatos para visualizar los datos",
+      tickformat = "%Y-%m-%d",
+      type = "date",
+      range = rango_fechas
+    ),
+    yaxis = list(
+      title = "",
+      tickformat = ".0%"
+    ),
+    title = "",
+    annotations = list(
+      list(
+        text = "",
+        xref = "paper",
+        yref = "paper",
+        x = 0,
+        y = 1.15,
+        showarrow = FALSE,
+        font = list(size = 13),
+        align = "left"
+      )
+    ),
+    legend = list(
+      itemclick = "toggle",
+      itemdoubleclick = "toggle"
+    )
+  )
+
+fig
+
+
+```
+
+
+# Ficha Técnica 
+
+## Row {height="20%"}
+
+**Red Uno - Captura Consulting (Primera Encuesta)**
+
+**Fecha de publicación**: 27 de marzo de 2025  
+**Tamaño de muestra**: 1.500 encuestas  
+**Periodo de realización**: 14 al 23 de marzo de 2025  
+**Nivel de confianza nacional**: 95%  
+**Margen de error nacional**: ±2,5%  
+[🔗 Ver fuente](https://www.reduno.com.bo/noticias/conozca-los-detalles-tecnicos-sobre-la-encuesta-nacional-de-captura-consulting--2025327204617)
+
+---
+
+**Unitel - Ipsos Ciesmori (Primera Encuesta)**
+
+**Fecha de publicación**: 1 de junio de 2025  
+**Tamaño de muestra**: 2.500 encuestas  
+**Periodo de realización**: 22 al 26 de mayo de 2025  
+**Nivel de confianza nacional**: 95%  
+**Margen de error nacional**: ±2,2%  
+[🔗 Ver fuente](https://unitel.bo/noticias/asi-decidimos/samuel-y-tuto-lideran-la-primera-encuesta-nacional-de-candidatos-inscritos-a-las-elecciones-2025-IH16110008)
+
+---
+
+**El Deber - Spie Consulting (Primera Encueta)**
+
+**Fecha de publicación**: 25 de junio de 2025  
+**Tamaño de muestra**: 2.500 encuestas  
+**Periodo de realización**: 7 al 14 de junio de 2025  
+**Nivel de confianza nacional**: 95%  
+**Margen de error nacional**: ±2,16%  
+[🔗 Ver fuente](https://eldeber.com.bo/pais/asi-se-construyo-la-primera-encuesta-nacional-de-el-deber-rumbo-los-comicios-de-agosto_519174/)
+:::
+
+::: {.card .border-warning}
+**Red Uno - Captura Consulting (Segunda Encuesta)**
+
+**Fecha de publicación**: 29 de junio de 2025  
+**Tamaño de muestra**: 2.500 encuestas  
+**Periodo de realización**: 10 al 20 de junio de 2025  
+**Nivel de confianza nacional**: 95%  
+**Margen de error nacional**: ±2,2%  
+[🔗 Ver fuente](https://www.reduno.com.bo/noticias/cuantas-personas-fueron-consultadas-en-la-segunda-gran-encuesta-esta-es-la-ficha-tecnica-202562919250)
+
+---
+
+**Unitel - Ipsos Ciesmori (Segunda Encuesta)**
+
+**Fecha de publicación**: 13 de julio de 2025  
+**Tamaño de muestra**: 2.500 encuestas  
+**Periodo de realización**: 5 al 7 de julio de 2025  
+**Nivel de confianza nacional**: 95%  
+**Margen de error nacional**: ±2,2%  
+[🔗 Ver fuente](https://unitel.bo/noticias/asi-decidimos/segunda-encuesta-nacional-sube-el-voto-indeciso-nulo-y-blanco-JC16636834)
+
+---
+
+**El Deber - Spie Consulting (Segunda Encuesta)**  
+
+**Fecha de publicación**: 16 de julio de 2025  
+**Tamaño de muestra**: 2.500 encuestas  
+**Periodo de realización**: 5 al 10 de julio de 2025  
+**Nivel de confianza nacional**: 95%  
+**Margen de error nacional**: ±2,2%  
+[🔗 Ver fuente](https://eldeber.com.bo/pais/ficha-tecnica-la-segunda-encuesta-de-el-deber-llega-un-mes-de-las-elecciones_522859/)
+:::
+
