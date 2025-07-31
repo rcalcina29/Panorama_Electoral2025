@@ -615,7 +615,7 @@ fig
 
 
 ```
-#### Crecimiento
+#### Variación
 ```{r}
 ## TAB 3 - Tasa de crecimiento por región {tab}
 library(plotly)
@@ -625,7 +625,7 @@ library(dplyr)
 datos_tasa <- caso1 %>%
   arrange(candidato, region, fecha) %>%
   group_by(candidato, region) %>%
-  mutate(tasa_crecimiento = (porcentaje - lag(porcentaje)) / lag(porcentaje)) %>%
+  mutate(tasa_crecimiento = (porcentaje - lag(porcentaje))) %>%
   ungroup()
 
 # Lista de candidatos únicos para el botón desplegable
