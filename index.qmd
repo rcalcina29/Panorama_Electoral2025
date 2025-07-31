@@ -560,7 +560,7 @@ fig <- fig %>%
       )
     ),
     xaxis = list(
-      title = "Para visualizar solo un departamento, presiona el nombre",
+      title = "Para visualizar solo un departamento, presiona sobre su nombre",
       type = "date",
       tickformat = "%Y-%m-%d",
       showgrid = FALSE
@@ -699,7 +699,7 @@ fig <- fig %>%
         yanchor = "top"
       )
     ),
-    xaxis = list(title = "Para visualizar solo un departamento, presiona el nombre", type = "date",
+    xaxis = list(title = "Para visualizar solo un departamento, presiona sobre su nombre", type = "date",
       tickformat = "%Y-%m-%d",  nticks = 4     # <- formato deseado para fechas en eje X
     ),
     yaxis = list(title = "", tickformat = ".0%"),
