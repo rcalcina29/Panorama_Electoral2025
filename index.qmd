@@ -43,7 +43,7 @@ candidatos_objetivo <- c("Samuel Doria Medina", "Jorge Tuto Quiroga", "Andrónic
 resultados_candidatos <- caso_nacional %>%
   filter(candidato %in% candidatos_objetivo) %>%
   group_by(candidato) %>%
-  mutate(tasa_crecimiento = (porcentaje - lag(porcentaje)) / lag(porcentaje)) %>%
+  mutate(tasa_crecimiento = (porcentaje - lag(porcentaje))) %>%
   summarise(
     promedio_porcentaje = mean(porcentaje, na.rm = TRUE),
     promedio_tasa = mean(tasa_crecimiento, na.rm = TRUE),
@@ -57,7 +57,7 @@ categorias_residuales <- c("Nulo", "Blanco", "Indecisos")
 voto_residual <- caso_nacional %>%
   filter(candidato %in% categorias_residuales) %>%
   group_by(candidato) %>%
-  mutate(tasa_crecimiento = (porcentaje - lag(porcentaje)) / lag(porcentaje)) %>%
+  mutate(tasa_crecimiento = (porcentaje - lag(porcentaje))) %>%
   summarise(
     promedio_porcentaje = mean(porcentaje, na.rm = TRUE),
     promedio_tasa = mean(tasa_crecimiento, na.rm = TRUE),
@@ -79,23 +79,32 @@ voto_residual <- caso_nacional %>%
 library(htmltools)
 library(shiny)
 library(shinydashboard)
+
 valueBox(
   value = HTML(
     paste0(
-      "<div style='display: flex; align-items: center;'>",
+      "<div style='display: flex; flex-direction: column; align-items: center; text-align: center;'>",
       
-        "<div style='display: flex; flex-direction: column; justify-content: flex-start;'>",
-          "<div style='font-size: 18px; font-weight: bold;'>Samuel Doria Medina</div>",
-          "<div style='font-size: 12px; margin-top: 1px;'>Tasa de crecimiento: ",
-          scales::percent(resultados_candidatos$promedio_tasa[resultados_candidatos$candidato == 'Samuel Doria Medina'], accuracy = 0.1),
-          "</div>",
-        "</div>",
+        # Nombre del candidato
+        "<div style='font-size: 18px; font-weight: bold;'>Samuel Doria Medina</div>",
         
-        "<div style='width: 20px;'></div>",
+        # Variación promedio en pp
+        "<div style='font-size: 12px; margin-top: 2px;'>Variación promedio: ",
+          scales::number(
+            resultados_candidatos$promedio_tasa[resultados_candidatos$candidato == 'Samuel Doria Medina'] * 100,
+            accuracy = 0.1
+          ),
+          " pp</div>",
         
-        # Tooltip aquí
-        "<div title='Promedio de todas las encuestas' style='font-size: 24px; font-weight: bold; color: #333; text-align: left;'>",
-          scales::percent(resultados_candidatos$promedio_porcentaje[resultados_candidatos$candidato == 'Samuel Doria Medina'], accuracy = 0.1),
+        # Espacio
+        "<div style='height: 6px;'></div>",
+        
+        # Valor principal: promedio de intención de voto
+        "<div title='Promedio de todas las encuestas' style='font-size: 24px; font-weight: bold; color: #333;'>",
+          scales::percent(
+            resultados_candidatos$promedio_porcentaje[resultados_candidatos$candidato == 'Samuel Doria Medina'],
+            accuracy = 0.1
+          ),
         "</div>",
       
       "</div>"
@@ -110,27 +119,37 @@ valueBox(
 ###
 
 ```{r}
+library(htmltools)
+library(shiny)
+library(shinydashboard)
+
 valueBox(
   value = HTML(
     paste0(
-      "<div style='display: flex; align-items: center;'>",
-      
-        # Columna izquierda: nombre y tasa
-        "<div style='display: flex; flex-direction: column; justify-content: flex-start;'>",
-          "<div style='font-size: 18px; font-weight: bold;'>Jorge Tuto Quiroga</div>",
-          "<div style='font-size: 12px; margin-top: 1px;'>Tasa de crecimiento: ",
-          scales::percent(resultados_candidatos$promedio_tasa[resultados_candidatos$candidato == 'Jorge Tuto Quiroga'], accuracy = 0.1),
-          "</div>",
+      "<div style='display: flex; flex-direction: column; align-items: center; text-align: center;'>",
+        
+        # Nombre del candidato
+        "<div style='font-size: 18px; font-weight: bold;'>Jorge Tuto Quiroga</div>",
+        
+        # Tasa de crecimiento en pp
+        "<div style='font-size: 12px; margin-top: 2px;'>Variación promedio: ",
+          scales::number(
+            resultados_candidatos$promedio_tasa[resultados_candidatos$candidato == 'Jorge Tuto Quiroga'] * 100,
+            accuracy = 0.1
+          ),
+          " pp</div>",
+        
+        # Espacio
+        "<div style='height: 6px;'></div>",
+        
+        # Valor principal: promedio de intención de voto
+        "<div title='Promedio de todas las encuestas' style='font-size: 24px; font-weight: bold; color: #333;'>",
+          scales::percent(
+            resultados_candidatos$promedio_porcentaje[resultados_candidatos$candidato == 'Jorge Tuto Quiroga'],
+            accuracy = 0.1
+          ),
         "</div>",
         
-        # Separador
-        "<div style='width: 20px;'></div>",
-        
-        # Promedio grande con tooltip
-        "<div title='Promedio de todas las encuestas' style='font-size: 24px; font-weight: bold; color: #333; text-align: left;'>",
-          scales::percent(resultados_candidatos$promedio_porcentaje[resultados_candidatos$candidato == 'Jorge Tuto Quiroga'], accuracy = 0.1),
-        "</div>",
-      
       "</div>"
     )
   ),
@@ -142,27 +161,37 @@ valueBox(
 ### 
 
 ```{r}
+library(htmltools)
+library(shiny)
+library(shinydashboard)
+
 valueBox(
   value = HTML(
     paste0(
-      "<div style='display: flex; align-items: center;'>",
-      
-        # Columna izquierda: nombre y tasa
-        "<div style='display: flex; flex-direction: column; justify-content: flex-start;'>",
-          "<div style='font-size: 18px; font-weight: bold;'>Andrónico Rodríguez</div>",
-          "<div style='font-size: 12px; margin-top: 1px;'>Tasa de crecimiento: ",
-          scales::percent(resultados_candidatos$promedio_tasa[resultados_candidatos$candidato == 'Andrónico Rodríguez'], accuracy = 0.1),
-          "</div>",
+      "<div style='display: flex; flex-direction: column; align-items: center; text-align: center;'>",
+        
+        # Nombre del candidato
+        "<div style='font-size: 18px; font-weight: bold;'>Andrónico Rodríguez</div>",
+        
+        # Tasa de crecimiento en pp
+        "<div style='font-size: 12px; margin-top: 2px;'>Variación promedio: ",
+          scales::number(
+            resultados_candidatos$promedio_tasa[resultados_candidatos$candidato == 'Andrónico Rodríguez'] * 100,
+            accuracy = 0.1
+          ),
+          " pp</div>",
+        
+        # Espacio
+        "<div style='height: 6px;'></div>",
+        
+        # Valor principal: promedio de intención de voto
+        "<div title='Promedio de todas las encuestas' style='font-size: 24px; font-weight: bold; color: #333;'>",
+          scales::percent(
+            resultados_candidatos$promedio_porcentaje[resultados_candidatos$candidato == 'Andrónico Rodríguez'],
+            accuracy = 0.1
+          ),
         "</div>",
         
-        # Separador
-        "<div style='width: 20px;'></div>",
-        
-        # Promedio grande con tooltip
-        "<div title='Promedio de todas las encuestas' style='font-size: 24px; font-weight: bold; color: #333; text-align: left;'>",
-          scales::percent(resultados_candidatos$promedio_porcentaje[resultados_candidatos$candidato == 'Andrónico Rodríguez'], accuracy = 0.1),
-        "</div>",
-      
       "</div>"
     )
   ),
@@ -174,33 +203,39 @@ valueBox(
 ###
 
 ```{r}
+library(htmltools)
+library(shiny)
+library(shinydashboard)
+
 valueBox(
   value = HTML(
     paste0(
-      "<div style='display: flex; align-items: center;'>",
-      
-        # Columna izquierda: nombre y tasa
-        "<div style='display: flex; flex-direction: column; justify-content: flex-start;'>",
-          "<div title='Voto Residual: Blanco, Nulo, Indecisos' style='font-size: 18px; font-weight: bold;'>Voto Residual</div>",
-          "<div style='font-size: 12px; margin-top: 1px;'>Tasa de crecimiento: ",
-          scales::percent(voto_residual$promedio_tasa, accuracy = 0.1),
-          "</div>",
-        "</div>",
+      "<div style='display: flex; flex-direction: column; align-items: center; text-align: center;'>",
         
-        # Separador
-        "<div style='width: 20px;'></div>",
+        # Título con tooltip
+        "<div title='Voto Residual: Blanco, Nulo, Indecisos' style='font-size: 18px; font-weight: bold;'>Voto Residual</div>",
         
-        # Promedio grande con tooltip
-        "<div title='Promedio de todas las encuestas' style='font-size: 24px; font-weight: bold; color: #333; text-align: left;'>",
+        # Tasa de crecimiento en pp
+        "<div style='font-size: 12px; margin-top: 2px;'>Variación promedio: ",
+          scales::number(
+            voto_residual$promedio_tasa * 100,
+            accuracy = 0.1
+          ),
+          " pp</div>",
+        
+        # Espacio
+        "<div style='height: 6px;'></div>",
+        
+        # Valor principal: promedio de intención de voto
+        "<div title='Promedio de todas las encuestas' style='font-size: 24px; font-weight: bold; color: #333;'>",
           scales::percent(voto_residual$promedio_porcentaje, accuracy = 0.1),
         "</div>",
-      
+        
       "</div>"
     )
   ),
   subtitle = NULL
 )
-
 
 ```
 
@@ -560,7 +595,7 @@ fig <- fig %>%
       )
     ),
     xaxis = list(
-      title = "Para visualizar solo un departamento, presiona sobre su nombre",
+      title = "Para visualizar solo un departamento, presiona el nombre",
       type = "date",
       tickformat = "%Y-%m-%d",
       showgrid = FALSE
@@ -699,7 +734,7 @@ fig <- fig %>%
         yanchor = "top"
       )
     ),
-    xaxis = list(title = "Para visualizar solo un departamento, presiona sobre su nombre", type = "date",
+    xaxis = list(title = "Para visualizar solo un departamento, presiona el nombre", type = "date",
       tickformat = "%Y-%m-%d",  nticks = 4     # <- formato deseado para fechas en eje X
     ),
     yaxis = list(title = "", tickformat = ".0%"),
@@ -754,7 +789,7 @@ for (i in seq_along(candidatos)) {
 # Obtener rango de fechas del dataset
 rango_fechas <- range(datos_nacional$fecha, na.rm = TRUE)
 rango_fechas[1] <- rango_fechas[1] - 1  # restar un día para el inicio
-rango_fechas[2] <- rango_fechas[2] + 1  # sumar un día para el fin
+rango_fechas[2] <- rango_fechas[2] + 15  # sumar un día para el fin
 
 rango_fechas <- as.character(rango_fechas)
 
@@ -863,4 +898,37 @@ fig
 **Margen de error nacional**: ±2,2%  
 [🔗 Ver fuente](https://eldeber.com.bo/pais/ficha-tecnica-la-segunda-encuesta-de-el-deber-llega-un-mes-de-las-elecciones_522859/)
 :::
+::: {.card .border-warning}
+**Red Uno - Captura Consulting (Tercera Encuesta)**
 
+**Fecha de publicación**:  
+**Tamaño de muestra**: 
+**Periodo de realización**: 
+**Nivel de confianza nacional**:  
+**Margen de error nacional**:  
+[🔗 Ver fuente](
+
+)
+
+---
+
+**Unitel - Ipsos Ciesmori (Tercera Encuesta)**
+
+**Fecha de publicación**: 30 de julio de 2025  
+**Tamaño de muestra**: 2.500 encuestas  
+**Periodo de realización**: 25 al 27 de julio de 2025  
+**Nivel de confianza nacional**: 95%  
+**Margen de error nacional**: ±2,2%  
+[🔗 Ver fuente](https://unitel.bo/noticias/asi-decidimos/encuesta-de-unitel-samuel-y-tuto-siguen-liderando-intencion-de-voto-andronico-cae-al-cuarto-lugar-NN16825932)
+
+---
+
+**El Deber - Spie Consulting (Tercera Encuesta)**  
+
+**Fecha de publicación**: 1 de agosto de 2025  
+**Tamaño de muestra**: 2.500 encuestas  
+**Periodo de realización**: 5 al 10 de julio de 2025  
+**Nivel de confianza nacional**: 95%  
+**Margen de error nacional**: ±2,2%  
+[🔗 Ver fuente](https://eldeber.com.bo/pais/ficha-tecnica-la-segunda-encuesta-de-el-deber-llega-un-mes-de-las-elecciones_522859/)
+:::
