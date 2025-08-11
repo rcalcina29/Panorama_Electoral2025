@@ -868,7 +868,7 @@ fig
 
 ::: {.card .border-warning}
 **Unitel - Ipsos Ciesmori - Cuarta Encuesta**  
-**Fecha de publicación**: 30 de julio de 2025  
+**Fecha de publicación**: 10 de agosto de 2025  
 **Tamaño de muestra**: 2.700 encuestas  
 **Periodo de realización**: 2 al 6 de agosto de 2025  
 **Nivel de confianza nacional**: 95%  
@@ -954,3 +954,4 @@ fig
 
 
 :::
+
